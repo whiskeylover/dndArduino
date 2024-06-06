@@ -1,3 +1,6 @@
+# State Machine
+
+```mermaid
 flowchart TD
     start(Start)
     wait(Wait)
@@ -79,3 +82,5 @@ flowchart TD
     end
 
     showStatus --> timerExpire{Timer Expired}
+
+```
