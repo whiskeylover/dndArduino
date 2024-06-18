@@ -1,63 +1,75 @@
-# dndArduino
-
-# State Machine
-
 ```mermaid
+
 flowchart TD
-    start(Start)
-    idle(Idle)
+    state_start(Start)
+    state_wait(Wait)
+    state_back_to_idle(Back to idle)
 
-    requested(Requested)
-    checkResponse{Check Response}
+    state_request_sent{Request Sent}
+    
+    state_request_accepted[Status: accepted]
+    state_request_denied[Status: denied]
+    state_request_timed_out[Status: cancelled]
 
-    showStatusWaiting[Status: waiting]
-    showStatusCancelled[Status: cancelled]
-    showStatusAccepted[Status: accepted]
-    showStatusDenied[Status: denied]
+    state_request_received{Responded With Button?}
+    state_responded_with_yes(Responded: Yes)
+    state_responded_with_no(Responded: No)
+    state_response_timed_out(Not responded)
 
-    timerExpire(Timer Expired)
 
-    start --> idle
-    idle --> |Button not pressed| idle
-    idle --> |If Request Button Pressed| requested
-    requested --> showStatusWaiting
-    requested --> checkResponse
+    state_start --> |"`status='idle'
+    timer=0
+    LED=WHITE`" | state_wait
 
-    checkResponse --> |request accepted| showStatusAccepted
-    checkResponse --> |request denied| showStatusDenied
-    checkResponse --> |request cancelled| showStatusCancelled
 
-    showStatusWaiting --> |"`status='wait'
+
+    state_wait --> |"`If request button Pressed
+    status='wait'
     timer=15
-    LED=WHITE`" |updateStatus
+    LED=PURPLE`" | state_request_sent
 
-    showStatusCancelled --> |"`status='cancelled'
+    state_wait --> state_back_to_idle
+    state_back_to_idle --> state_wait
+
+    state_request_sent --> |request accepted| state_request_accepted
+    state_request_sent --> |request denied| state_request_denied
+    state_request_sent --> |request cancelled| state_request_timed_out
+
+    state_request_accepted --> |"`status='accepted'
     timer=5
-    LED=YELLOW`" |updateStatus
+    LED=GREEN`" |state_wait
 
-    showStatusAccepted --> |"`status='accepted'
+    state_request_denied --> |"`status='denied'
     timer=5
-    LED=GREEN`" |updateStatus
+    LED=RED`" |state_wait
 
-    showStatusDenied --> |"`status='denied'
+    state_request_timed_out --> |"`status='cancelled'
     timer=5
-    LED=RED`" |updateStatus
+    LED=YELLOW`" |state_wait
 
-    updateStatus --> idle
+    
+    
+    state_wait --> |"`If Request Message Received
+    status='wait'
+    timer=15
+    LED=PURPLE`" | state_request_received
+
+    state_request_received --> |Yes| state_responded_with_yes
+    state_request_received --> |No| state_responded_with_no
+    state_request_received --> |timd eout| state_response_timed_out
+
+    state_responded_with_yes --> |"`status='accepted'
+    timer=5
+    LED=GREEN`" |state_wait
+
+    state_responded_with_no --> |"`status='denied'
+    timer=5
+    LED=RED`"|state_wait
+
+    state_response_timed_out --> |"`status='cancelled'
+    timer=5
+    LED=YELLOW`" |state_wait
 
 
-    subgraph showStatus[Show Status]
-    startShowStatus[Start]
-    setStatusFlag[Set the status flag = status]
-    startTimer[Reset timer = timer]
-    setLED[Show LED = color]
-
-    timerExpire --> |yes| resetStatus
-    timerExpire --> |no| timerExpire
-    startShowStatus --> setStatusFlag & startTimer & setLED
-    startTimer --> timerExpire
-    end
-
-    showStatus --> timerExpire{Timer Expired}
 
 ```
